@@ -1,6 +1,36 @@
 int_handler:
     # Save Context
-
+    csrrw a0, mscratch, a0	# troca valor de a0 com mscratch
+	sw a1, 0(a0)
+	sw a2, 4(a0)
+	sw a3, 8(a0)
+	sw a4, 12(a0)
+	sw a5, 16(a0)
+	sw a6, 20(a0)
+	sw a7, 24(a0)
+	sw s0, 28(a0)
+	sw s1, 32(a0)
+	sw s2, 36(a0)
+	sw s3, 40(a0)
+	sw s4, 44(a0)
+	sw s5, 48(a0)
+	sw s6, 52(a0)
+	sw s7, 56(a0)
+	sw s8, 60(a0)
+	sw s9, 64(a0)
+	sw s10, 68(a0)
+	sw s11, 72(a0)
+	sw t0, 76(a0)
+	sw t1, 80(a0)
+	sw t2, 84(a0)
+	sw t3, 88(a0)
+	sw t4, 92(a0)
+	sw t5, 96(a0)
+	sw t6, 100(a0)
+	sw ra, 104(a0)
+	sw sp, 108(a0)
+	sw gp, 112(a0)
+	sw tp, 116(a0)
     # end Save Context
     
     # Handle
@@ -82,7 +112,40 @@ int_handler:
     # end Handle
 
     # Restore context
-    
+    csrr t0, mepc  # carrega endereÃ§o de retorno (endereÃ§o da instruÃ§Ã£o que invocou a syscall)
+    addi t0, t0, 4 # soma 4 no endereÃ§o de retorno (para retornar apÃ³s a ecall) 
+    csrw mepc, t0  # armazena endereÃ§o de retorno de volta no mepc
+	lw a1, 0(a0)
+	lw a2, 4(a0)
+	lw a3, 8(a0)
+	lw a4, 12(a0)
+	lw a5, 16(a0)
+	lw a6, 20(a0)
+	lw a7, 24(a0)
+	lw s0, 28(a0)
+	lw s1, 32(a0)
+	lw s2, 36(a0)
+	lw s3, 40(a0)
+	lw s4, 44(a0)
+	lw s5, 48(a0)
+	lw s6, 52(a0)
+	lw s7, 56(a0)
+	lw s8, 60(a0)
+	lw s9, 64(a0)
+	lw s10, 68(a0)
+	lw s11, 72(a0)
+	lw t0, 76(a0)
+	lw t1, 80(a0)
+	lw t2, 84(a0)
+	lw t3, 88(a0)
+	lw t4, 92(a0)
+	lw t5, 96(a0)
+	lw t6, 100(a0)
+	lw ra, 104(a0)
+	lw sp, 108(a0)
+	lw gp, 112(a0)
+	lw tp, 116(a0)
+	csrrw a0, mscratch, a0	# troca valor de a0 com mscratch
     # end Restore context
         
 .globl _start
