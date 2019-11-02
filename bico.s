@@ -58,8 +58,23 @@ set_torque: # (a0=int engine_1, a1=int engine_2)
 *    0 in case both values are valid
 */
 set_engine_torque:		# (a0 = int engine_id; a1 = int torque)
+    li t0, -100
+    li t1, 100
+    blt a1, t0, invalid_torque		# if torque is less than -100, then it is a invalid value
+    bgt a1, t1, invalid_torque		# if torque is greater than 100, then it is a invalid value
     li a7, 18
     ecall # code for set_engine_torque syscall is 18
+    beqz a0, valid_parameters       # if we passed through the invalid_torque comparisons but didn't pass through "valid_parameters", the engine_id is invalid
+    li a0, -2
+    ret
+
+    invalid_torque:
+        li a0, -1
+        ret
+
+    valid_parameters:
+        li a0, 0
+        ret
 
 /* Sets the angle of three Servo motors that control the robot head. 
 *   Servo ID 0/1/2 identifies the Base/Mid/Top servos.
@@ -74,6 +89,22 @@ set_engine_torque:		# (a0 = int engine_id; a1 = int torque)
 set_head_servo:     # (a0 = int servo_id; a1 = int angle)
     li a7, 17
     ecall # code for set_head_servo syscall is 17
+    li t0, -2
+    beq a0, t0, servo_id_error      # if syscall returned -2 in a0, servoID is invalid
+    li t0, -1
+    beq a0, t0, servo_angle_error   # if syscall returned -1 in a0, servo angle is invalid
+    ## if it passed through the previous "ifs", the syscall returned 0 in a0, both servoID and angle are valid
+    mv a0, zero
+    ret
+
+    servo_id_error:
+        li a0, -1
+        ret
+    
+    servo_angle_error:
+        li a0, -2
+        ret
+
 
 /**************************************************************/
 /* Sensors                                                    */
@@ -88,7 +119,7 @@ set_head_servo:     # (a0 = int servo_id; a1 = int angle)
 get_us_distance:        # the function has no parameters
     li a7, 16           # code for read_ultrasonic_sensor syscall is 16
     ecall
-
+    ret
 /* 
 * Reads current global position using the GPS device.
 * Parameter: 
@@ -99,7 +130,7 @@ get_us_distance:        # the function has no parameters
 get_current_GPS_position: # (a0=Vector3* pos)
     li a7, 19 # syscall read_gps (19)
     ecall
-
+    ret
 /* 
 * Reads global rotation from the gyroscope device .
 * Parameter: 
@@ -110,7 +141,7 @@ get_current_GPS_position: # (a0=Vector3* pos)
 get_gyro_angles: # (a0=Vector3* pos)
     li a7, 20 # syscall read_gyroscope (20)
     ecall
-
+    ret
 /**************************************************************/
 /* Timer                                                      */
 /**************************************************************/
@@ -122,10 +153,10 @@ get_gyro_angles: # (a0=Vector3* pos)
 * Returns:
 *   The system time (in milliseconds)
 */
-get_time: # 
+get_time: #
     li a7, 21 # syscall get_time (21)
     ecall
-
+    ret
 
 /* 
 * Sets the system time.
@@ -137,6 +168,7 @@ get_time: #
 set_time: # (a0=unsigned int t)
     li a7, 22 # syscall set_time (22)
     ecall
+    ret
 
 /**************************************************************/
 /* UART                                                       */
@@ -164,3 +196,4 @@ puts: # (a0=char* s)
     li a2, t1 # size
     li a7, 64 # syscall write (64)
     ecall
+    ret
