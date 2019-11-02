@@ -72,58 +72,65 @@ int_handler:
 
 
         read_ultrasonic_sensor_ecall: # altera
-        set_servo_angles_ecall: # altera
+            li t0, 0xFFFF0020
+            sw zero, 0(t0)      # initialize process of reading ultrasonic sensor
+            read_ultrasonic_sensor_ecall_while:
+                lw t1, 0(t0)    # t1 <= value contained in 0xFFFF0020
+                beqz t1, read_ultrasonic_sensor_ecall_while  # while t1 is equal to 0, continue reading; if it's not equal to 0, then it must be 1
+            lw a0, 4(t0)        # a0 <= value contained in 0xFFFF0024
+            j restore_context
+
+        set_servo_angles_ecall: # (a0=engine_id, a1=angle) -> (servoID/angles validation)
             li t0, 1
             li t1, 2
-            beq a0, t0, valid_servoID
-            beq a0, t1, valid_servoID
-            beqz a0, valid_servoID
+            beqz a0, base
+            beq a0, t0, mid
+            beq a0, t1, top
             # in case the servoID isn't 0 nor 1 nor 2, then it's invalid.
             j invalid_servoID
 
-            valid_servoID:      # once we have a valid servoID, we must check if the angle value is valid
-                # limits for a0 = 0 => 16-116 (Base)
-                # limits for a0 = 1 => 52-90 (Mid)
-                # limits for a0 = 2 => 0-156 (Top)
+            # once we have a valid servoID, we must check if the angle value is valid
+            # limits for a0 = 0 => 16-116 (Base)
+            # limits for a0 = 1 => 52-90 (Mid)
+            # limits for a0 = 2 => 0-156 (Top)
+
+            base:
+                li t0, 16
+                li t1, 116
+                blt a1, t0, invalid_angle
+                bgt a1, t1, invalid_angle
+                li t0, 0xFFFF001E       # memory position associated with base servo motor
+                sw a1, 0(t0)            # save the modified angle for the base servo motor
+                j valid_parameters      # in case the angle parameter is in the range 16-116, then it is a valid angle for base
+            
+            mid:
+                li t0, 52
+                li t1, 90
+                blt a1, t0, invalid_angle
+                bgt a1, t1, invalid_angle
+                li t0, 0xFFFF001D       # memory position associated with mid servo motor
+                sw a1, 0(t0)            # save the modified angle for the mid servo motor
+                j valid_parameters      # in case the angle parameter is in the range 52-90, then it is a valid angle for mid
+
+            top:
                 li t0, 0
-                li t1, 1
-                li t2, 2
-                beq a0, t0, base
-                beq a0, t1, mid
-                beq a0, t2, top
-                j invalid_servoID
-
-                base:
-                    li t0, 16
-                    li t1, 116
-                    blt a1, t0, invalid_angle
-                    bgt a1, t1, invalid_angle
-                    j valid_parameters      # in case the angle parameter is in the range 16-116, then it is a valid angle for base
-                
-                mid:
-                    li t0, 52
-                    li t1, 90
-                    blt a1, t0, invalid_angle
-                    bgt a1, t1, invalid_angle
-                    j valid_parameters      # in case the angle parameter is in the range 52-90, then it is a valid angle for mid
-
-                top:
-                    li t0, 0
-                    li t1, 156
-                    blt a1, t0, invalid_angle
-                    bgt a1, t1, invalid_angle
-                    j valid_parameters      # in case the angle parameter is in the range 0-156, then it is a valid angle for top
+                li t1, 156
+                blt a1, t0, invalid_angle
+                bgt a1, t1, invalid_angle
+                li t0, 0xFFFF001C       # memory position associated with top servo motor
+                sw a1, 0(t0)            # save the modified angle for the top servo motor
+                j valid_parameters      # in case the angle parameter is in the range 0-156, then it is a valid angle for top
 
             valid_parameters:
-                li a0, 0
+                li a0, 0        # in case both parameters are valid, we must return 0
                 j restore_context
 
             invalid_servoID:
-                li a0, -1       # in case the servoID is invalid, we must return -1
+                li a0, -2       # in case the servoID is invalid, we must return -2
                 j restore_context
 
             invalid_angle:
-                li a0, -2       # in case the angle is invalid, we must return -2
+                li a0, -1       # in case the angle is invalid, we must return -1
                 j restore_context
 
         set_engine_torque_ecall: # altera
@@ -132,20 +139,12 @@ int_handler:
             beqz a0, valid_engineID			# if engine_id equals to zero, branch to valid_engineID
             j invalid_engineID				# else, branch to invalid_engineID
 
-            valid_engineID:		# once we have a valid engine_id, we must check if the torque value is valid
-                li t0, -100
-                li t1, 100
-                blt a1, t0, invalid_torque		# if torque is less than -100, then it is a invalid value
-                bgt a1, t1, invalid_torque		# if torque is greater than 100, then it is a invalid value
-                li a0, 0						# else, we have a valid torque and a valid engineID. then, we must return 0
+            valid_engineID:
+                li a0, 0					# in case the engine_id is valid, we must return 0
                 j restore_context
 
             invalid_engineID:
-                li a0, -2					# in case the engine_id is invalid, we must return -2
-                j restore_context
-
-            invalid_torque:
-                li a0, -1					# in case the torque is invalid, we must return -1
+                li a0, -1					# in case the engine_id is invalid, we must return -1
                 j restore_context
     
         read_gps_ecall: # nao altera
