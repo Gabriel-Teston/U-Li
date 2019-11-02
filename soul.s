@@ -39,18 +39,22 @@ int_handler:
     bgez s0, exception
     # Handle interruption
     andi s0, s0, 0x3f
-    li a2, 7
-    bne a1, a2, other_int
+    li a2, 11
+    bne s0, a2, other_int
     # Machine timer interruption
-        li a1, 0xFFFF0104
-        sw zero, 0(a1)
-        la a1, sys_time
-        lw a2, 0(a1)
+        li s0, 0xFFFF0104
+        sb zero, 0(s0)
+        la s0, sys_time
+        lw a2, 0(s0)
         addi a2, a2, 1
         sw a2, 0(a1)
-        li a1, 0xFFFF0100
-        li a2, 1
-        sw a2, 0(a1)
+        li s0, 0xFFFF0100
+        li a2, 1000
+        sw a2, 0(s0)
+        #li a0, 1
+        #la a1, string
+        #li a2, 6
+        #j write_ecall
         j restore_context
     # end Machine timer interruption
     other_int:
@@ -93,7 +97,7 @@ int_handler:
             lw a0, 4(t0)        # a0 <= value contained in 0xFFFF0024
             j restore_context
 
-        set_servo_angles_ecall: # (a0=engine_id, a1=angle) -> (servoID/angles validation)
+        set_servo_angles_ecall: # (a0=servo_id, a1=angle) -> (servoID/angles validation)
             li t0, 1
             li t1, 2
             beqz a0, base
@@ -113,7 +117,7 @@ int_handler:
                 blt a1, t0, invalid_angle
                 bgt a1, t1, invalid_angle
                 li t0, 0xFFFF001E       # memory position associated with base servo motor
-                sw a1, 0(t0)            # save the modified angle for the base servo motor
+                sb a1, 0(t0)            # save the modified angle for the base servo motor
                 j valid_parameters      # in case the angle parameter is in the range 16-116, then it is a valid angle for base
             
             mid:
@@ -122,7 +126,7 @@ int_handler:
                 blt a1, t0, invalid_angle
                 bgt a1, t1, invalid_angle
                 li t0, 0xFFFF001D       # memory position associated with mid servo motor
-                sw a1, 0(t0)            # save the modified angle for the mid servo motor
+                sb a1, 0(t0)            # save the modified angle for the mid servo motor
                 j valid_parameters      # in case the angle parameter is in the range 52-90, then it is a valid angle for mid
 
             top:
@@ -131,7 +135,7 @@ int_handler:
                 blt a1, t0, invalid_angle
                 bgt a1, t1, invalid_angle
                 li t0, 0xFFFF001C       # memory position associated with top servo motor
-                sw a1, 0(t0)            # save the modified angle for the top servo motor
+                sb a1, 0(t0)            # save the modified angle for the top servo motor
                 j valid_parameters      # in case the angle parameter is in the range 0-156, then it is a valid angle for top
 
             valid_parameters:
@@ -146,13 +150,21 @@ int_handler:
                 li a0, -1       # in case the angle is invalid, we must return -1
                 j restore_context
 
-        set_engine_torque_ecall: # altera
+        set_engine_torque_ecall: # (a0=engine_id, a1=torque) -> (engineID/angles validation)
             li t0, 1		# 1 is one of the possible Engine ID values; the other possible value is 0, which is in x0 register
-            beq a0, t0, valid_engineID		# if engine_id equals to 1, branch to valid_engineID 
-            beqz a0, valid_engineID			# if engine_id equals to zero, branch to valid_engineID
+            beqz a0, set_torque_motor1			# if engine_id equals to zero, branch to set_torque_motor1
+            beq a0, t0, set_torque_motor2		# if engine_id equals to 1, branch to set_torque_motor2 
             j invalid_engineID				# else, branch to invalid_engineID
 
-            valid_engineID:
+            set_torque_motor1:
+                li t0, 0xFFFF001A
+                sh a1, 0(t0)
+                li a0, 0					# in case the engine_id is valid, we must return 0
+                j restore_context
+
+            set_torque_motor2:
+                li t0, 0xFFFF0018
+                sh a1, 0(t0)
                 li a0, 0					# in case the engine_id is valid, we must return 0
                 j restore_context
 
@@ -254,8 +266,10 @@ int_handler:
         mret
 
     # end Restore context
+sys_time:
+.skip 4
+reg_buffer: .skip 248
 
-    
         
 .globl _start
 _start:
@@ -263,11 +277,13 @@ _start:
     /* Hardware Config                                            */
     /**************************************************************/
 
-    sys_time:.skip 4
+    
     # Config GPT
     li t0, 0xFFFF0100
-    li t1, 1
+    li t1, 1000
     sw t1, 0(t0)
+    li t0, 0xFFFF0104
+    sb zero, 0(t0)
     # end Config GPT
 
     # Config Engine 0 Torque
@@ -312,6 +328,11 @@ _start:
     csrr t0, mstatus
     ori t0, t0, 0x80
     csrw mstatus, t0
+
+    csrr t1, mie # Seta o bit 11 (MEIE)
+    li t2, 0x800 # do registrador mie
+    or t1, t1, t2
+    csrw mie, t1
     # end Enable Interruptions
 
     # Config User stack
@@ -319,11 +340,31 @@ _start:
     # end Config User stack
 
     # Config Sys stack
-    reg_buffer: .skip 124
     la t0, reg_buffer
     csrw mscratch, t0
     # end Config Sys stack
 
+    # Change to user mode
+    csrr t1, mstatus # Seta os bits 11 e 12 (MPP)
+    li t2, ~0x1800 # do registrador mstatus
+    and t1, t1, t2 # com o valor 00
+    csrw mstatus, t1
+    # end Change to user mode
+
     # Call LoCo
-    call main
+    #call main
+    la t0, main # Grava o endereço do rótulo user
+    csrw mepc, t0 # no registrador mepc
+    mret
     # end Call LoCo
+    
+    main_loop:
+        #la a1, sys_time
+        #lw a2, 0(a1)
+        li a0, 1
+        la a1, sys_time
+        li a2, 4 
+        li a7, 64
+        ecall
+        j main_loop
+string: .ascii "mc404\n"
