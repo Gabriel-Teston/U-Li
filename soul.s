@@ -35,14 +35,22 @@ int_handler:
     # end Save context
 
     # Select 
-    csrr a1, mcause
-    bgez a1, exception
+    csrr s0, mcause
+    bgez s0, exception
     # Handle interruption
-    andi a1, a1, 0x3f
+    andi s0, s0, 0x3f
     li a2, 7
     bne a1, a2, other_int
     # Machine timer interruption
-
+        li a1, 0xFFFF0104
+        sw zero, 0(a1)
+        la a1, sys_time
+        lw a2, 0(a1)
+        addi a2, a2, 1
+        sw a2, 0(a1)
+        li a1, 0xFFFF0100
+        li a2, 1
+        sw a2, 0(a1)
         j restore_context
     # end Machine timer interruption
     other_int:
@@ -52,22 +60,22 @@ int_handler:
     
     # Handle ecall
     exception:
-        li a1, 16
-        beq a1, a7, read_ultrasonic_sensor_ecall
-        addi a1, 1
-        beq a1, a7, set_servo_angles_ecall
-        addi a1, 1
-        beq a1, a7, set_engine_torque_ecall
-        addi a1, 1
-        beq a1, a7, read_gps_ecall
-        addi a1, 1
-        beq a1, a7, read_gyroscope_ecall
-        addi a1, 1
-        beq a1, a7, get_time_ecall
-        addi a1, 1
-        beq a1, a7, set_time_ecall
-        addi a1, 42
-        beq a1, a7, write_ecall
+        li s0, 16
+        beq s0, a7, read_ultrasonic_sensor_ecall
+        addi s0, 1
+        beq s0, a7, set_servo_angles_ecall
+        addi s0, 1
+        beq s0, a7, set_engine_torque_ecall
+        addi s0, 1
+        beq s0, a7, read_gps_ecall
+        addi s0, 1
+        beq s0, a7, read_gyroscope_ecall
+        addi s0, 1
+        beq s0, a7, get_time_ecall
+        addi s0, 1
+        beq s0, a7, set_time_ecall
+        addi s0, 42
+        beq s0, a7, write_ecall
         j restore_context
 
 
@@ -149,10 +157,58 @@ int_handler:
                 j restore_context
     
         read_gps_ecall: # nao altera
-        read_gyroscope_ecall: # nao altera
-        get_time_ecall: # altera
-        set_time_ecall: # nao altera
-        write_ecall: # altera
+            li a1, 0xFFFF0004
+            li a2, 0
+            sw a2, 0(a1)
+            read_gps_ecall_loop_1:
+                lw a3, 0(a1)
+                beq a2, a3, read_gps_ecall_loop_1
+            li a1, 0xFFFF0008
+            lw a2, 0(a1)
+            sw a2, 0(a0)
+            li a1, 0xFFFF000C
+            lw a2, 0(a1)
+            sw a2, 4(a0)
+            li a1, 0xFFFF0010
+            lw a2, 0(a1)
+            sw a2, 8(a0)
+            j restore_context
+
+        read_gyroscope_ecall: # (a0=pointer to struct) -> ()
+            li a1, 0xFFFF0004
+            li a2, 0
+            sw a2, 0(a1)
+            read_gyroscope_ecall_loop_1:
+                lw a3, 0(a1)
+                beq a2, a3, read_gyroscope_ecall_loop_1
+            li a1, 0xFFFF0014
+            lw a2, 0(a1)
+            sw a2, 0(a0)
+            j restore_context
+
+        get_time_ecall: # () -> (a0=sys_time)
+            la a1, sys_time
+            lw a0, 0(a1)
+        set_time_ecall: # (a0=new sys_time) -> ()
+            la a1, sys_time
+            sw a0, 0(a1)
+            j restore_context
+        write_ecall: # (a0=file descriptor, a1=buffer addres, a2=buffer size) -> (a0=writen bytes)
+            write_ecall_loop_1:
+                li a4, 0xFFFF0109
+                lbu a5, a1
+                sb a5, 0(a4)
+                li a4, 0xFFFF0108
+                li a5, 1
+                sb a5, 0(a4)
+                write_ecall_loop_2:
+                    lbu a6, 0(a4)
+                    beq a5, a6, write_ecall_loop_2
+                addi a1, a1, 1
+                lbu a5, a1
+                bne zero, a5, write_ecall_loop_1
+            mv a0, a2
+            j restore_context
     # end Handle ecall
 
     # Restore context
@@ -205,6 +261,7 @@ _start:
     /* Hardware Config                                            */
     /**************************************************************/
 
+    sys_time:.skip 4
     # Config GPT
     li t0, 0xFFFF0100
     li t1, 1
