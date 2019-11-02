@@ -187,13 +187,13 @@ puts: # (a0=char* s)
     mv t0, a0
     puts_loop_1:
         lb t2, 0(t0)
-        addi t0, 1
-        addi t1, 1
+        addi t0, t0, 1
+        addi t1, t1, 1
         bnez t2, puts_loop_1
 
     mv a1, a0 #  buffer
     li a0, 1 # file descriptor = 1 (stdout)
-    li a2, t1 # size
+    mv a2, t1 # size
     li a7, 64 # syscall write (64)
     ecall
     ret

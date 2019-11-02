@@ -60,21 +60,26 @@ int_handler:
     
     # Handle ecall
     exception:
+    
+        csrr t0, mepc  # carrega endereÃ§o de retorno (endereÃ§o da instruÃ§Ã£o que invocou a syscall)
+        addi t0, t0, 4 # soma 4 no endereÃ§o de retorno (para retornar apÃ³s a ecall) 
+        csrw mepc, t0  # armazena endereÃ§o de retorno de volta no mepc
+
         li s0, 16
         beq s0, a7, read_ultrasonic_sensor_ecall
-        addi s0, 1
+        addi s0, s0, 1
         beq s0, a7, set_servo_angles_ecall
-        addi s0, 1
+        addi s0, s0, 1
         beq s0, a7, set_engine_torque_ecall
-        addi s0, 1
+        addi s0, s0, 1
         beq s0, a7, read_gps_ecall
-        addi s0, 1
+        addi s0, s0, 1
         beq s0, a7, read_gyroscope_ecall
-        addi s0, 1
+        addi s0, s0, 1
         beq s0, a7, get_time_ecall
-        addi s0, 1
+        addi s0, s0, 1
         beq s0, a7, set_time_ecall
-        addi s0, 42
+        addi s0, s0, 42
         beq s0, a7, write_ecall
         j restore_context
 
@@ -195,7 +200,7 @@ int_handler:
         write_ecall: # (a0=file descriptor, a1=buffer addres, a2=buffer size) -> (a0=writen bytes)
             write_ecall_loop_1:
                 li a4, 0xFFFF0109
-                lbu a5, a1
+                lbu a5, 0(a1)
                 sb a5, 0(a4)
                 li a4, 0xFFFF0108
                 li a5, 1
@@ -204,7 +209,7 @@ int_handler:
                     lbu a6, 0(a4)
                     beq a5, a6, write_ecall_loop_2
                 addi a1, a1, 1
-                lbu a5, a1
+                lbu a5, 0(a1)
                 bne zero, a5, write_ecall_loop_1
             mv a0, a2
             j restore_context
@@ -212,9 +217,7 @@ int_handler:
 
     # Restore context
     restore_context:
-        csrr t0, mepc  # carrega endereÃ§o de retorno (endereÃ§o da instruÃ§Ã£o que invocou a syscall)
-        addi t0, t0, 4 # soma 4 no endereÃ§o de retorno (para retornar apÃ³s a ecall) 
-        csrw mepc, t0  # armazena endereÃ§o de retorno de volta no mepc
+        
 
         csrrw a0, mscratch, a0
         lw a1, 0(a0)
