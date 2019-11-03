@@ -49,12 +49,12 @@ int_handler:
         addi a2, a2, 1
         sw a2, 0(a1)
         li s0, 0xFFFF0100
-        li a2, 1000
+        li a2, 1
         sw a2, 0(s0)
-        #li a0, 1
-        #la a1, string
-        #li a2, 6
-        #j write_ecall
+        li a0, 1
+        la a1, string
+        li a2, 6
+        j write_ecall
         j restore_context
     # end Machine timer interruption
     other_int:
@@ -280,7 +280,7 @@ _start:
     
     # Config GPT
     li t0, 0xFFFF0100
-    li t1, 1000
+    li t1, 1
     sw t1, 0(t0)
     li t0, 0xFFFF0104
     sb zero, 0(t0)
@@ -361,10 +361,10 @@ _start:
     main_loop:
         #la a1, sys_time
         #lw a2, 0(a1)
-        li a0, 1
-        la a1, sys_time
-        li a2, 4 
-        li a7, 64
-        ecall
+        #li a0, 1
+        #la a1, sys_time
+        #li a2, 4 
+        #li a7, 64
+        #ecall
         j main_loop
 string: .ascii "mc404\n"
