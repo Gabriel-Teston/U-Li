@@ -10,6 +10,7 @@
 *   -1 in case one or more values are out of range
 *    0 in case both values are in range
 */
+.globl set_torque
 set_torque: # (a0=int engine_1, a1=int engine_2)
     # begin push to sp
     addi sp, sp, -4
@@ -57,6 +58,7 @@ set_torque: # (a0=int engine_1, a1=int engine_2)
 *   -2 in case the engine_id is invalid
 *    0 in case both values are valid
 */
+.globl set_engine_torque
 set_engine_torque:		# (a0 = int engine_id; a1 = int torque)
     li t0, -100
     li t1, 100
@@ -86,6 +88,7 @@ set_engine_torque:		# (a0 = int engine_id; a1 = int torque)
 *   -2 in case the servo angle is invalid
 *    0 in case the servo id and the angle is valid
 */
+.globl set_head_servo
 set_head_servo:     # (a0 = int servo_id; a1 = int angle)
     li a7, 17
     ecall # code for set_head_servo syscall is 17
@@ -116,6 +119,7 @@ set_head_servo:     # (a0 = int servo_id; a1 = int angle)
  * Returns:
  *   distance of nearest object within the detection range, in centimeters.
  */
+ .globl get_us_distance
 get_us_distance:        # the function has no parameters
     li a7, 16           # code for read_ultrasonic_sensor syscall is 16
     ecall
@@ -127,6 +131,7 @@ get_us_distance:        # the function has no parameters
 * Returns:
 *   void
 */
+.globl get_current_GPS_position
 get_current_GPS_position: # (a0=Vector3* pos)
     li a7, 19 # syscall read_gps (19)
     ecall
@@ -138,6 +143,7 @@ get_current_GPS_position: # (a0=Vector3* pos)
 * Returns:
 *   void
 */
+.globl get_gyro_angles
 get_gyro_angles: # (a0=Vector3* pos)
     li a7, 20 # syscall read_gyroscope (20)
     ecall
@@ -153,6 +159,7 @@ get_gyro_angles: # (a0=Vector3* pos)
 * Returns:
 *   The system time (in milliseconds)
 */
+.globl get_time
 get_time: #
     li a7, 21 # syscall get_time (21)
     ecall
@@ -165,6 +172,7 @@ get_time: #
 * Returns:
 *   void
 */
+.globl set_time
 set_time: # (a0=unsigned int t)
     li a7, 22 # syscall set_time (22)
     ecall
@@ -182,6 +190,7 @@ set_time: # (a0=unsigned int t)
 * Returns:
 *   void
 */
+.globl puts
 puts: # (a0=char* s)
     li t1, 0
     mv t0, a0
