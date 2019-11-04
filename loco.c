@@ -2,19 +2,19 @@
 /**************************************************************/
 /* Solver of non-linear equations                             */
 /**************************************************************/
-int df1_x() {
+int df1_x(int a) {
     return a;
 }
 
-int df1_y() {
+int df1_y(int b) {
     return -1 * b;
 }
 
-int df2_x() {
+int df2_x(int x, int xo) {
     return 2*(x - xo);
 }
 
-int df2_y() {
+int df2_y(int y, int yo) {
     return 2*(y - yo);
 }
 
@@ -102,18 +102,82 @@ char* itoa(int num, char* str, int base)
 /**************************************************************/
 /* Movement_controller                                        */
 /**************************************************************/
+void print_pos(){
+    char* string;
+    Vector3 aux = {.x = 0, .y = 0, .z = 0};
+    get_current_GPS_position(&aux);
+    itoa(aux.x, string, 10);
+    puts(string);
+    puts(" \0");
+    itoa(aux.y, string, 10);
+    puts(string);
+    puts(" \0");
+    itoa(aux.z, string, 10);
+    puts(string);
+    puts("\n\0");
+}
+
+void print_orientation(){
+    char* string;
+    Vector3 aux = {.x = 0, .y = 0, .z = 0};
+    get_gyro_angles(&aux);
+    itoa(aux.x, string, 10);
+    puts(string);
+    puts(" \0");
+    itoa(aux.y, string, 10);
+    puts(string);
+    puts(" \0");
+    itoa(aux.z, string, 10);
+    puts(string);
+    puts("\n\0");
+}
+
+/*Vector3* get_pos(){
+    Vector3* vec = (Vector3*) malloc(sizeof(Vector3));
+    get_current_GPS_position(&vec);
+    return vec;
+}*/
+
+int get_y_angle(){
+    Vector3 aux = {.x = 0, .y = 0, .z = 0};
+    get_gyro_angles(&aux);
+    return aux.y;
+}
+
+void go_to_pos(Vector3* pos){
+    Vector3 aux = {.x = 0, .y = 0, .z = 0};
+    get_current_GPS_position(&aux);
+    int offset_angle = ((int)(pos->y-aux.y)/(pos->x-aux.x));
+}
+
+void rotate(int angle){
+    puts("Rotacionando ");
+    puts(itoa(angle, "", 10));
+    puts(" graus\n\0");
+    int initial = get_y_angle();
+    int self = get_y_angle();
+    set_torque(10,-10);
+    print_orientation();
+    while(self < (initial+angle)%360){
+        self = get_y_angle();
+    }
+    print_orientation();
+    set_torque(0, 0);
+}
 
 /**************************************************************/
 /* Main                                                       */
 /**************************************************************/
 int main(){
-    //char string [7]= "mc404\n";
+    char string [7]= "mc404\n";
     set_torque(100,100);  
+    set_torque(0,0);
+    rotate(90);
     //set_head_servo(0, 90);
     //set_head_servo(1, 90);
     //set_head_servo(2, 0);
     int dist;
-    while(1){
+    while(0){
         dist = get_us_distance();
         itoa(dist, string, 10);
         puts(string);
@@ -121,10 +185,12 @@ int main(){
     }
     Vector3 aux = {.x = 0, .y = 0, .z = 0};
     while(0){
-        get_current_GPS_position(&aux);
-        if(aux.x + 5000 <= 715 || aux.x - 5000 <= 715){
-            puts(string);
-        }
+        //get_current_GPS_position(&aux);
+        //itoa(aux.x, string, 10);
+        //puts(string);
+        //puts("\n\0");
+        //print_pos();
+        print_orientation();
     }
     char s[] = "sdfsd";
     
