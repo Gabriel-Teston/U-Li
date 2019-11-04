@@ -11,7 +11,7 @@
 *    0 in case both values are in range
 */
 .globl set_torque
-set_torque: # (a0=int engine_1, a1=int engine_2)
+set_torque: # (a0=int engine_1 torque, a1=int engine_2 torque)
     # begin push to sp
     addi sp, sp, -4
     sw  ra, 0(sp)

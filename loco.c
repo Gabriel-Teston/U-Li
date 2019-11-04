@@ -1,8 +1,25 @@
 #include "api_robot2.h"
+/**************************************************************/
+/* Solver of non-linear equations                             */
+/**************************************************************/
+int df1_x() {
+    return a;
+}
+
+int df1_y() {
+    return -1 * b;
+}
+
+int df2_x() {
+    return 2*(x - xo);
+}
+
+int df2_y() {
+    return 2*(y - yo);
+}
+
 
 /* A utility function to reverse a string  */
-
- 
 void reverse(char *s)
 {
    int length, c;
@@ -75,15 +92,15 @@ char* itoa(int num, char* str, int base)
     reverse(str); 
   
     return str; 
-} 
+}
 
 int main(){
-    char string [7]= "mc404\n";
-    //set_torque(100,100);
+    //char string [7]= "mc404\n";
+    set_torque(100,100);  
     //set_head_servo(0, 90);
     //set_head_servo(1, 90);
     //set_head_servo(2, 0);
-    int dist;
+    /* int dist;
     while(1){
         dist = get_us_distance();
         itoa(dist, string, 10);
