@@ -95,6 +95,58 @@ char* itoa(int num, char* str, int base)
     return str; 
 }
 
+int intToStr(int x, char str[], int d) 
+{ 
+    int i = 0; 
+    while (x) 
+    { 
+        str[i++] = (x%10) + '0'; 
+        x = x/10; 
+    } 
+  
+    // If number of digits required is more, then 
+    // add 0s at the beginning 
+    while (i < d) 
+        str[i++] = '0'; 
+  
+    reverse(str); 
+    str[i] = '\0'; 
+    return i; 
+} 
+
+char* ftoa(float n, char *res, int afterpoint) 
+{ 
+    // Extract integer part 
+    int ipart = (int)n; 
+  
+    // Extract floating part 
+    float fpart = n - (float)ipart; 
+  
+    // convert integer part to string
+    itoa(ipart, res, 10);
+    int  i = string_length(res); 
+    //int i = intToStr(ipart, res, 0); 
+  
+    // check for display option after point 
+    if (afterpoint != 0) 
+    { 
+        res[i] = '.';  // add dot 
+  
+        // Get the value of fraction part upto given no. 
+        // of points after dot. The third parameter is needed 
+        // to handle cases like 233.007
+        for(int j = 1; j <= afterpoint; j++){
+            fpart = fpart * 10;
+            itoa((int) fpart, res + i + j, 10);
+            fpart = fpart - (int) fpart;
+        }
+        //fpart = fpart * pow(10, afterpoint); 
+  
+        //itoa((int)fpart, res + i + 1, 10); 
+    } 
+    return res;
+} 
+
 /**************************************************************/
 /* Path_Finder                                                */
 /**************************************************************/
@@ -102,6 +154,27 @@ char* itoa(int num, char* str, int base)
 /**************************************************************/
 /* Movement_controller                                        */
 /**************************************************************/
+double pow(double num, int pot){
+    double p = 1;
+    for(int i=0; i<pot; i++){
+        p = p * num;
+    }
+    return p;
+}
+
+double arctan(double x) {
+    double ret = 0.0;
+	const unsigned int BIG_NUM = 1E2;//1E6; // the larger this number, the more precise the approximation
+    
+    for (int i = 0; i < BIG_NUM; ++i) {
+        double n = i * 2 + 1; // odd number
+		int c = pow(-1, i); // coefficient alternating signs
+        ret += c * pow(x, n) / n;
+    }
+    
+    return ret;
+}
+
 void print_pos(){
     char* string;
     Vector3 aux = {.x = 0, .y = 0, .z = 0};
@@ -170,9 +243,9 @@ void rotate(int angle){
 /**************************************************************/
 int main(){
     char string [7]= "mc404\n";
-    set_torque(100,100);  
-    set_torque(0,0);
-    rotate(90);
+    //set_torque(100,100);  
+    //set_torque(0,0);
+    //rotate(90);
     //set_head_servo(0, 90);
     //set_head_servo(1, 90);
     //set_head_servo(2, 0);
@@ -192,8 +265,10 @@ int main(){
         //print_pos();
         print_orientation();
     }
-    char s[] = "sdfsd";
+    float f = 2112.01234;//arctan(1);
+    puts(ftoa(arctan(0.1), "", 3));
+    char* s = "sdfsd\0";
     
-    puts(s);
+    //puts(s);
     return 0;
 }
