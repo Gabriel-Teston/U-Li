@@ -199,6 +199,22 @@ int_handler:
                 beq a2, a3, read_gyroscope_ecall_loop_1
             li a1, 0xFFFF0014
             lw a2, 0(a1)
+            li a1, 0x3FF
+            and a2, a2, a1
+            sw a2, 8(a0)
+
+            li a1, 0xFFFF0014
+            lw a2, 0(a1)
+            li a1, 0xFFC00
+            and a2, a2, a1
+            srli a2, a2, 10
+            sw a2, 4(a0)
+
+            li a1, 0xFFFF0014
+            lw a2, 0(a1)
+            li a1, 0x3FF00000
+            and a2, a2, a1
+            srli a2, a2, 20
             sw a2, 0(a0)
             j restore_context
 
@@ -357,12 +373,7 @@ _start:
     #csrw mepc, t0 # no registrador mepc
     #mret
     # end Call LoCo
-    nop
-    li a0, 1
-    la a1, string
-    li a2, 4 
-    li a7, 64
-    ecall
+
     main_loop:
         #la a1, sys_time
         #lw a2, 0(a1)
