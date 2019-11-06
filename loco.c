@@ -2,21 +2,60 @@
 /**************************************************************/
 /* Solver of non-linear equations                             */
 /**************************************************************/
-int df1_x() {
+float f1(float x, float z, float a, float b, float c) {
+    return (a*x) - (b*z) + c;
+}
+
+float f2(float x, float z, float xo, float zo) {
+    return (x-xo)*(x-xo) + (z-zo)*(z-zo) - 100;
+}
+
+float df1_x(a) {
     return a;
 }
 
-int df1_y() {
-    return -1 * b;
+float df1_y() {
+    return 1;
 }
 
-int df2_x() {
+float df2_x(x,xo) {
     return 2*(x - xo);
 }
 
-int df2_y() {
-    return 2*(y - yo);
+float df2_y(z,zo) {
+    return 2*(z - zo);
 }
+
+float newton_method(float x, float z, float xo, float zo, float a, float b, float c) {
+    float J[4], Fx[2], det, invDet, inv_J[4], aux[2], s[2], k = 0;
+    while (k < 10) {        // 10 iterações
+        J[0] = df1_x(a);
+        J[1] = df1_y();
+        J[2] = df2_x(x, xo);
+        J[3] = df2_y(z, zo);
+        Fx[0] = -1 * f1(x, z, a, b, c);
+        Fx[1] = -1 * f2(x, z, xo, zo);
+        // Aqui temos a matriz jacobiana e a matriz Fx. Agora, devemos achar o passo de Newton, dado por s = (J^-1)*Fx
+        det = (J[0]*J[3]) - (J[1]*J[2]);
+        invDet = 1/det;
+
+        inv_J[0] = J[3];
+        inv_J[1] = -1 * J[1];
+        inv_J[2] = -1 * J[2];
+        inv_J[3] = J[0];
+        aux[0] = (inv_J[0] * Fx[0]) + (inv_J[1] * Fx[1]);
+        aux[1] = (inv_J[2] * Fx[0]) + (inv_J[3] * Fx[1]);
+        s[0] = invDet * aux[0];
+        s[1] = invDet * aux[1];
+
+        x = x + s[0];
+        z = z + s[1];
+    }
+}
+
+// Repetir 10 vezes
+
+
 
 /**************************************************************/
 /* Strings                                                    */
