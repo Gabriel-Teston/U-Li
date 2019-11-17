@@ -38,18 +38,22 @@ int_handler:
     csrr s0, mcause
     bgez s0, exception
     # Handle interruption
-    andi s0, s0, 0x3f
-    li a2, 11
-    bne s0, a2, other_int
+    ##andi s0, s0, 0x3f
+    ##li a2, 11
+    ##bne s0, a2, other_int
     # Machine timer interruption
-        li s0, 0xFFFF0104
-        sb zero, 0(s0)
+        
+
         la s0, sys_time
         lw a2, 0(s0)
         addi a2, a2, 1
-        sw a2, 0(a1)
+        sw a2, 0(s0)
+
+        li s0, 0xFFFF0104
+        sb zero, 0(s0)
+        
         li s0, 0xFFFF0100
-        li a2, 1
+        li a2, 1000
         sw a2, 0(s0)
         #li a0, 1
         #la a1, string
@@ -221,6 +225,7 @@ int_handler:
         get_time_ecall: # () -> (a0=sys_time)
             la a1, sys_time
             lw a0, 0(a1)
+            j restore_context
         set_time_ecall: # (a0=new sys_time) -> ()
             la a1, sys_time
             sw a0, 0(a1)
@@ -295,11 +300,11 @@ _start:
 
     
     # Config GPT
-    #li t0, 0xFFFF0100
-    #li t1, 0
-    #sw t1, 0(t0)
-    #li t0, 0xFFFF0104
-    #sb zero, 0(t0)
+    li t0, 0xFFFF0100
+    li t1, 1000
+    sw t1, 0(t0)
+    li t0, 0xFFFF0104
+    sb zero, 0(t0)
     # end Config GPT
 
     # Config Engine 0 Torque
@@ -368,10 +373,10 @@ _start:
     # end Change to user mode
 
     # Call LoCo
-    call main
-    #la t0, main # Grava o endereço do rótulo user
-    #csrw mepc, t0 # no registrador mepc
-    #mret
+    #call main
+    la t0, main # Grava o endereço do rótulo user
+    csrw mepc, t0 # no registrador mepc
+    mret
     # end Call LoCo
 
     main_loop:

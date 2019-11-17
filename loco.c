@@ -2,98 +2,6 @@
 /**************************************************************/
 /* Solver of non-linear equations                             */
 /**************************************************************/
-float f1(float x, float z, float a, float b, float c) {
-    return (a*x) - (b*z) + c;
-}
-
-float f2(float x, float z, float xo, float zo) {
-    return (x-xo)*(x-xo) + (z-zo)*(z-zo) - 100;
-}
-
-float df1_x(a) {
-    return a;
-}
-
-float df1_y() {
-    return 1;
-}
-
-float df2_x(x,xo) {
-    return 2*(x - xo);
-}
-
-float df2_y(z,zo) {
-    return 2*(z - zo);
-}
-
-float* newton_method(float x, float z, float xo, float zo, float a, float b, float c) {
-    float J[4], Fx[2], det, invDet, inv_J[4], aux[2], s[2], res[2], k = 0;
-    while (k < 10) {        // 10 iterações
-        J[0] = df1_x(a);
-        J[1] = df1_y();
-        J[2] = df2_x(x, xo);
-        J[3] = df2_y(z, zo);
-        Fx[0] = -1 * f1(x, z, a, b, c);
-        Fx[1] = -1 * f2(x, z, xo, zo);
-        // Aqui temos a matriz jacobiana e a matriz Fx. Agora, devemos achar o passo de Newton, dado por s = (J^-1)*Fx
-        det = (J[0]*J[3]) - (J[1]*J[2]);
-        invDet = 1/det;
-    
-        inv_J[0] = J[3];
-        inv_J[1] = -1 * J[1];
-        inv_J[2] = -1 * J[2];
-        inv_J[3] = J[0];
-        aux[0] = (inv_J[0] * Fx[0]) + (inv_J[1] * Fx[1]);
-        aux[1] = (inv_J[2] * Fx[0]) + (inv_J[3] * Fx[1]);
-        s[0] = invDet * aux[0];
-        s[1] = invDet * aux[1];
-
-        x = x + s[0];
-        z = z + s[1];
-    }
-
-    res[0] = x;
-    res[1] = z;
-    return res;
-}
-
-
-/**************************************************************/
-/* Strings                                                    */
-/**************************************************************/
-void reverse(char *s)
-{
-   int length, c;
-   char *begin, *end, temp;
- 
-   length = string_length(s);
-   begin  = s;
-   end    = s;
- 
-   for (c = 0; c < length - 1; c++)
-      end++;
- 
-   for (c = 0; c < length/2; c++)
-   {        
-      temp   = *end;
-      *end   = *begin;
-      *begin = temp;
- 
-      begin++;
-      end--;
-   }
-}
- 
-int string_length(char *pointer)
-{
-   int c = 0;
- 
-   while( *(pointer + c) != '\0' )
-      c++;
- 
-   return c;
-}
-// Implementation of itoa() 
 char* itoa(int num, char* str, int base) 
 { 
     int i = 0; 
@@ -134,6 +42,112 @@ char* itoa(int num, char* str, int base)
   
     return str; 
 }
+
+float magnitude(Vector3* vec){
+    int a = pow(vec->x, 2);
+    int b = pow(vec->z, 2);
+    return sqrt((int) (vec->x*vec->x + vec->z*vec->z));
+}
+
+
+float f1(float x, float z, float a, float b, float c) {
+    return (a*x) + (b*z) + c;
+}
+
+float f2(float x, float z, float xo, float zo) {
+    return (x-xo)*(x-xo) + (z-zo)*(z-zo) - 100;
+}
+
+float df1_x(a) {
+    return a;
+}
+
+float df1_y() {
+    return -1;
+}
+
+float df2_x(x,xo) {
+    return 2*(x - xo);
+}
+
+float df2_y(z,zo) {
+    return 2*(z - zo);
+}
+
+Vector3 newton_method(int x, int z, int xo, int zo, float a, int b, float c) {
+    float J[4], Fx[2], det, invDet, inv_J[4], aux[2], s[2], k = 0;
+    while (k < 30) {        // 10 iterações
+        J[0] = df1_x(a);
+        J[1] = df1_y();
+        J[2] = df2_x(x, xo);
+        J[3] = df2_y(z, zo);
+        Fx[0] = -1 * f1(x, z, a, b, c);
+        Fx[1] = -1 * f2(x, z, xo, zo);
+        // Aqui temos a matriz jacobiana e a matriz Fx. Agora, devemos achar o passo de Newton, dado por s = (J^-1)*Fx
+        det = (J[0]*J[3]) - (J[1]*J[2]);
+        invDet = 1/det;
+    
+        inv_J[0] = J[3];
+        inv_J[1] = -1 * J[1];
+        inv_J[2] = -1 * J[2];
+        inv_J[3] = J[0];
+        aux[0] = (inv_J[0] * Fx[0]) + (inv_J[1] * Fx[1]);
+        aux[1] = (inv_J[2] * Fx[0]) + (inv_J[3] * Fx[1]);
+        s[0] = invDet * aux[0];
+        s[1] = invDet * aux[1];
+
+        x = x + s[0];
+        z = z + s[1];
+        k++;
+    }
+    Vector3 res = {.x=(int)x, .y=105, .z=(int)z};
+
+    puts(" Resultados Newton Method: \n");
+    puts(itoa(res.x, "", 10));
+    puts("\t");
+    puts(itoa(res.z, "", 10));
+    puts("\n");
+    return res;
+}
+
+
+/**************************************************************/
+/* Strings                                                    */
+/**************************************************************/
+void reverse(char *s)
+{
+   int length, c;
+   char *begin, *end, temp;
+ 
+   length = string_length(s);
+   begin  = s;
+   end    = s;
+ 
+   for (c = 0; c < length - 1; c++)
+      end++;
+ 
+   for (c = 0; c < length/2; c++)
+   {        
+      temp   = *end;
+      *end   = *begin;
+      *begin = temp;
+ 
+      begin++;
+      end--;
+   }
+}
+ 
+int string_length(char *pointer)
+{
+   int c = 0;
+ 
+   while( *(pointer + c) != '\0' )
+      c++;
+ 
+   return c;
+}
+// Implementation of itoa() 
+
 
 int intToStr(int x, char str[], int d) 
 { 
@@ -199,9 +213,9 @@ char* ftoa(double n, char *res, int afterpoint)
 /**************************************************************/
 Vector3 original_path[50] = {
   {.x = 728, .y = 105, .z = -56},
-  {.x = 714, .y = 106, .z = -45},
+  {.x = 714, .y = 105, .z = -45},
   {.x = 695, .y = 105, .z = -35},
-  {.x = 670, .y = 105, .z = -33},
+  {.x = 667, .y = 105, .z = -20},
   {.x = 626, .y = 105, .z = -30},
   {.x = 523, .y = 106, .z = -15},
   {.x = 471, .y = 105, .z = 34},
@@ -265,7 +279,7 @@ float sqrt(int x)
 {
     int cont = 0;
     float guess = x/2.0;
-    while(cont < 20){
+    while(cont < 30){
         guess = (x/guess + guess)/2.0;
         cont++;
     }
@@ -276,6 +290,12 @@ float dist(Vector3* v1, Vector3* v2){
     int a = pow(v1->x - v2->x, 2);
     int b = pow(v1->z - v2->z, 2);
     return sqrt(a + b);
+}
+
+float dist_to_line(Vector3* start, Vector3* end, Vector3* point){
+    int a = (end->z-start->z)/(end->x-start->x);
+    int b = start->z - (a*start->x);
+    return absolute((a*point->x)-(point->z)+b)/sqrt(a*a+b*b);
 }
 
 void find_path(Vector3** original_path, Vector3* friends, Vector3* enemies, int n_originalPath, int n_friends, int n_enemies){
@@ -312,29 +332,114 @@ void find_path(Vector3** original_path, Vector3* friends, Vector3* enemies, int 
         
         used[friend] = closest;
 
-        /*puts("\n");
-        puts(ftoa(min_dist, "", 0));
-        puts("\n");
-
-        for(int i = 0; i < n_friends; i++){
-            puts(itoa(used[i], "", 10));
-            puts("\t");
-        }
-        puts("\n");*/
-        
     }
+    for(int point = 0; point < n_originalPath-1; point++){
+        for(int enemie = 0; enemie < n_enemies; enemie++){
+            int start_x = original_path[point*3], start_z = original_path[(point*3)+2];
+            int end_x = original_path[((point+1)*3)], end_z = original_path[((point+1)*3)+2];
+            int point_x = enemies[enemie].x, point_z = enemies[enemie].z;
+            float a = (end_z - start_z) / (end_x - start_x);
+            float b = start_z - (a*start_x);
+            float dtl = absolute((a*point_x)-(point_z)+b)/sqrt(a*a+1.0);
+            puts("start_x: ");
+            puts(ftoa(start_x, "", 3));
+            puts(" ");
+            puts("start_z: ");
+            puts(ftoa(start_z, "", 3));
+            puts("\n");
+            puts("end_x: ");
+            puts(ftoa(end_x, "", 3));
+            puts(" ");
+            puts("end_z: ");
+            puts(ftoa(end_z, "", 3));
+            puts("\n");
+            
+            puts("a: ");
+            puts(ftoa(a, "", 3));
+            puts("\n");
+            puts("b: ");
+            puts(ftoa(b, "", 3));
+            puts("\n");
+            if( dtl < 10.0){
+                int d = sqrt((start_x-end_x)*(start_x-end_x)+(start_z-end_z)*(start_z-end_z));
+                int d1 = dist(&(original_path[point*3]), &enemies[enemie]);
+                int d2 = dist(&(original_path[(point+1)*3]), &enemies[enemie]);
+                puts("Com distancia: \n");
+                puts(itoa(dtl, "", 10));
+                puts("\n");
+                if( d1 < d &&  d2 < d ){
+                    Vector3 aux = newton_method(start_x, start_z, point_x, point_z, a, -1, b);
+                    Vector3 aux1 = newton_method(end_x, end_z, point_x, point_z, a, -1, b);
+                    
+                    puts("Intersectou entre: \n");
+                    puts(itoa(start_x, "", 10));
+                    puts(" ");
+                    puts(itoa(start_z, "", 10));
+                    puts("\n");
+                    puts(itoa(end_x, "", 10));
+                    puts(" ");
+                    puts(itoa(end_z, "", 10));
+                    puts("\n");
+                    puts("Com distancia: \n");
+                    puts(itoa(dtl, "", 10));
+                    puts("\n");
+                    puts("Bateu no inimigo: \n");
+                    puts(itoa(point_x, "", 10));
+                    puts(" ");
+                    puts(itoa(point_z, "", 10));
+                    puts("\n");
+                    puts("Nos pontos:\n");
+                    puts(itoa(aux.x, "", 10));
+                    puts(" ");
+                    puts(itoa(aux.z, "", 10));
+                    puts("\n");
+                    puts(itoa(aux1.x, "", 10));
+                    puts(" ");
+                    puts(itoa(aux1.z, "", 10));
+                    puts("\n");
+                    
+                    
+                    aux.x = aux.x  - point_x;
+                    aux.y = 0;
+                    aux.z=aux.z  - point_z;
 
+                    aux1.x = aux1.x  - point_x;
+                    aux1.y=0;
+                    aux1.z = aux1.z  - point_z;
+                    
+                    Vector3 vec = {.x=aux.x+aux1.x, .y=0, .z=aux.z+aux1.z};
+                    float mag = magnitude(&vec);
+
+                    vec.x/=mag;
+                    vec.z/=mag;
+
+                    vec.x*=10;
+                    vec.z*=10;
+
+                    vec.x+=enemies[enemie].x;
+                    vec.z+=enemies[enemie].z;
+
+                    
+                    puts("Gerando o ponto:\n");
+                    puts(itoa(vec.x, "", 10));
+                    puts(" ");
+                    puts(itoa(vec.z, "", 10));
+                    puts("\n");
+
+
+                    insert(original_path, point+1, &vec, n_originalPath);
+
+                    point--;
+                }
+            }
+        }
+    }
 }
 
 
 /**************************************************************/
 /* Movement_controller                                        */
 /**************************************************************/
-
-
-
-
-
 
 double fatorial(int x){
     if (x)
@@ -417,9 +522,6 @@ void print_orientation(){
     puts("\n\0");
 }
 
-
-
-
 int get_y_angle(){
     Vector3 aux = {.x = 0, .y = 0, .z = 0};
     get_gyro_angles(&aux);
@@ -475,6 +577,61 @@ void go_to_pos(Vector3* pos){
 /**************************************************************/
 
 int main(){
+    /* while(1){
+        puts(itoa(get_time(), "", 10));
+        puts("\n");
+    }*/
+    /*Vector3 start = {.x=0, .y=0, .z=-10};
+    Vector3 end = {.x=5, .y=0, .z=25};
+    Vector3 enemie = {.x=10, .y=0, .z=0};
+
+
+    int a = 7;
+    int b = -10;
+    Vector3 aux = newton_method(start.x, start.z, enemie.x, enemie.z, a, -1, b);
+    Vector3 aux1 = newton_method(end.x, end.z, enemie.x, enemie.z, a, -1, b);
+
+    puts("ponto 1\n");
+    puts(itoa(aux.x, "", 10));
+    puts("\t");
+    puts(itoa(aux.z, "", 10));
+    puts("\n");
+    puts("pont 2\n");
+    puts(itoa(aux1.x, "", 10));
+    puts("\t");
+    puts(itoa(aux1.z, "", 10));
+    puts("\n");
+
+
+    aux.x = aux.x  - enemie.x;
+    aux.y=0;
+    aux.z=aux.z  - enemie.z;
+
+    aux1.x = aux1.x  - enemie.x;
+    aux1.y=0;
+    aux1.z=aux1.z  - enemie.z;
+
+    Vector3 vec = {.x=aux.x+aux1.x, .y=0, .z=aux.z+aux1.z};
+    float mag = sqrt((int)(vec.x*vec.x+vec.z*vec.z));
+    //magnitude(&vec);
+
+    puts(itoa((int)mag, "", 10));
+    puts("\n");
+
+    vec.x/=mag;
+    vec.z/=mag;
+
+    vec.x*=10;
+    vec.z*=10;
+
+    vec.x+=enemie.x;
+    vec.z+=enemie.z;
+
+    puts(itoa(vec.x, "", 10));
+    puts("\t");
+    puts(itoa(vec.z, "", 10));
+    puts("\n");*/
+
     int n_originalPath = sizeof(original_path) / sizeof(original_path[0]);
     int n_friends = sizeof(friends_locations) / sizeof(friends_locations[0]);
     int n_enemies = sizeof(dangerous_locations) / sizeof(dangerous_locations[0]);
@@ -483,6 +640,8 @@ int main(){
 
     for(int loop = 0; loop < n_originalPath; loop++) {
         puts(itoa(original_path[loop].x, "", 10));
+        puts(" ");
+        puts(itoa(original_path[loop].z, "", 10));
         puts("\n");
     }
 
