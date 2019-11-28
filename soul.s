@@ -38,31 +38,24 @@ int_handler:
     csrr s0, mcause
     bgez s0, exception
     # Handle interruption
-    ##andi s0, s0, 0x3f
-    ##li a2, 11
-    ##bne s0, a2, other_int
     # Machine timer interruption
-        
+        li s0, 0xFFFF0104
+        lb a2, 0(s0)
+        beqz a2, restore_context
 
         la s0, sys_time
         lw a2, 0(s0)
-        addi a2, a2, 1
+        addi a2, a2, 100
         sw a2, 0(s0)
 
         li s0, 0xFFFF0104
         sb zero, 0(s0)
         
         li s0, 0xFFFF0100
-        li a2, 1000
+        li a2, 100
         sw a2, 0(s0)
-        #li a0, 1
-        #la a1, string
-        #li a2, 6
-        #j write_ecall
         j restore_context
     # end Machine timer interruption
-    other_int:
-        j restore_context
     # end Handle interruption
     # end Select
     
@@ -301,7 +294,7 @@ _start:
     
     # Config GPT
     li t0, 0xFFFF0100
-    li t1, 1000
+    li t1, 100
     sw t1, 0(t0)
     li t0, 0xFFFF0104
     sb zero, 0(t0)
@@ -373,16 +366,10 @@ _start:
     # end Change to user mode
 
     # Call LoCo
-    #call main
     la t0, main # Grava o endereço do rótulo user
     csrw mepc, t0 # no registrador mepc
     mret
     # end Call LoCo
 
     main_loop:
-        #la a1, sys_time
-        #lw a2, 0(a1)
-        
-        #ecall
         j main_loop
-string: .ascii "mc404\n"
